@@ -21,6 +21,7 @@ import (
 	"github.com/status-im/status-go/services/personal"
 	"github.com/status-im/status-go/services/rpcfilters"
 	"github.com/status-im/status-go/services/shhext/chat"
+	"github.com/status-im/status-go/services/shhext/chat/crypto"
 	"github.com/status-im/status-go/signal"
 	"github.com/status-im/status-go/transactions"
 )
@@ -420,7 +421,7 @@ func (b *StatusBackend) SelectAccount(address, password string) error {
 		}
 
 		if err := st.InitProtocol(address, password); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -498,4 +499,19 @@ func (b *StatusBackend) ExtractIdentityFromContactCode(contactCode string) (stri
 	}
 
 	return chat.ExtractIdentity(bundle)
+}
+
+// VerifySignatures verifies that the signatures are valid
+func (b *StatusBackend) VerifySignatures(signaturePairs [][3]string) error {
+	return crypto.VerifySignatures(signaturePairs)
+}
+
+// Sign signs a piece of data
+func (b *StatusBackend) Sign(content string) (string, error) {
+	selectedAccount, err := b.AccountManager().SelectedAccount()
+	if err != nil {
+		return "", err
+	}
+
+	return crypto.Sign(content, selectedAccount.AccountKey.PrivateKey)
 }
